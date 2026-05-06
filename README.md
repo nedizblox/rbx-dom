@@ -9,7 +9,7 @@ struct RbxlPartData {
     position: [f32; 3],
     size: [f32; 3],
     orientation: [f32; 3],
-    color: [f32; 3],
+    color: [u8; 3],
     transparency: f32,
     anchored: bool
 }

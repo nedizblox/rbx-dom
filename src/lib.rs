@@ -14,7 +14,7 @@ pub struct RbxlPartData {
     pub position: [f32; 3],
     pub size: [f32; 3],
     pub orientation: [f32; 3],
-    pub color: [f32; 3],
+    pub color: [u8; 3],
     pub transparency: f32,
     pub anchored: bool,
 }
@@ -118,7 +118,7 @@ pub extern "C" fn rbxlLoad(path: *const c_char, out_count: *mut usize) -> *mut R
                 position: [pos.x, pos.y, pos.z],
                 size: [size.x, size.y, size.z],
                 orientation: [ort.x, ort.y, ort.z],
-                color: [color.r as f32, color.g as f32, color.b as f32],
+                color: [color.r, color.g, color.b],
                 transparency: transparency,
                 anchored,
             });
