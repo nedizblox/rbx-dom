@@ -8,10 +8,20 @@ struct RbxlPartData {
     name: *const c_char,
     position: [f32; 3],
     size: [f32; 3],
-    orientation: [f32; 3],
+    orientation: [f32; 3], // in radians
     color: [u8; 3],
     transparency: f32,
-    anchored: bool
+    anchored: bool,
+    shape: RbxlPartType
+}
+
+// Part type enum
+enum RbxlPartType {
+    Ball,
+    Block,
+    Cylinder,
+    Wedge,
+    CornerWedge
 }
 
 // Load the rbxl file and get parts array as raw pointer

@@ -17,6 +17,16 @@ pub struct RbxlPartData {
     pub color: [u8; 3],
     pub transparency: f32,
     pub anchored: bool,
+    pub shape: RbxlPartType
+}
+
+#[repr(C)]
+pub enum RbxlPartType {
+    Ball,
+    Block,
+    Cylinder,
+    Wedge,
+    CornerWedge
 }
 
 #[no_mangle]
@@ -49,7 +59,7 @@ pub extern "C" fn rbxlLoad(path: *const c_char, out_count: *mut usize) -> *mut R
             let (pos, ort) = match inst.properties.get(&Ustr::from("CFrame")) {
                 Some(Variant::CFrame(cf)) => {
                     let pos = cf.position;
-                    let rot = cframe_to_euler_deg(cf);
+                    let rot = cframe_to_euler_rad(cf);
                     (pos, rot)
                 }
                 _ => {
@@ -113,6 +123,24 @@ pub extern "C" fn rbxlLoad(path: *const c_char, out_count: *mut usize) -> *mut R
                 })
                 .unwrap_or(false);
 
+            let shape_id = inst
+                .properties
+                .get(&Ustr::from("Shape"))
+                .and_then(|v| match v {
+                    Variant::Enum(e) => Some(e.to_u32()),
+                    _ => None
+                })
+                .unwrap_or(1);
+
+            let part_type = match shape_id {
+                0 => RbxlPartType::Ball,
+                1 => RbxlPartType::Block,
+                2 => RbxlPartType::Cylinder,
+                3 => RbxlPartType::Wedge,
+                4 => RbxlPartType::CornerWedge,
+                _ => RbxlPartType::Block,
+            };
+
             parts.push(RbxlPartData {
                 name: name.into_raw(),
                 position: [pos.x, pos.y, pos.z],
@@ -120,7 +148,8 @@ pub extern "C" fn rbxlLoad(path: *const c_char, out_count: *mut usize) -> *mut R
                 orientation: [ort.x, ort.y, ort.z],
                 color: [color.r, color.g, color.b],
                 transparency: transparency,
-                anchored,
+                anchored: anchored,
+                shape: part_type
             });
         }
     }
@@ -149,11 +178,7 @@ pub extern "C" fn rbxlFree(ptr: *mut RbxlPartData, count: usize) {
     }
 }
 
-fn rad2deg(r: f32) -> f32 {
-    r * 180.0 / PI
-}
-
-fn cframe_to_euler_deg(cf: &CFrame) -> Vector3 {
+fn cframe_to_euler_rad(cf: &CFrame) -> Vector3 {
     let orientation = cf.orientation;
     let m = [
         [orientation.x.x, orientation.x.y, orientation.x.z],
@@ -162,7 +187,7 @@ fn cframe_to_euler_deg(cf: &CFrame) -> Vector3 {
     ];
 
     let (x, y, z) = mat3_to_euler_zyx(m);
-    Vector3::new(rad2deg(x), rad2deg(y), rad2deg(z))
+    Vector3::new(x, y, z)
 }
 
 fn mat3_to_euler_zyx(m: [[f32; 3]; 3]) -> (f32, f32, f32) {
